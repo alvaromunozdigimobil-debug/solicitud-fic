@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Solicitud FIC</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#007bff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Solicitud FIC">
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    padding: 15px;
+    background: #f2f2f2;
+    max-width: 680px;
+    margin: auto;
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+label {
+    font-weight: bold;
+    margin-top: 14px;
+    display: block;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    margin-top: 4px;
+    border-radius: 5px;
+    border: 1px solid #999;
+    box-sizing: border-box;
+    font-size: 16px;
+}
+
+textarea {
+    min-height: 100px;
+}
+
+button {
+    margin-top: 20px;
+    padding: 15px;
+    width: 100%;
+    font-size: 18px;
+    font-weight: bold;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+}
+
+button:hover {
+    background: #0056b3;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Formulario Solicitud FIC</h2>
+
+<form id="ficForm">
+
+<label>Fecha del evento:</label>
+<input type="date" id="fecha" required>
+
+<label>Grupo de trabajo:</label>
+<select id="grupo" required>
+    <option value="">Seleccionar...</option>
+    <option value="SEV5">SEV5</option>
+    <option value="SEV10">SEV10</option>
+</select>
+
+<label>Correo electrónico del empleado:</label>
+<input type="email" id="email" required>
+
+<label>Tipo de actuación:</label>
+<select id="actuacion" onchange="actualizarTipo()" required>
+
+    <option value="">Seleccionar...</option>
+
+    <option value="ERROR CTO FACHADA POR ARQUETA">
+        ERROR CTO FACHADA POR ARQUETA
+    </option>
+
+    <option value="ERROR CTO INTERIOR POR ARQUETA">
+        ERROR CTO INTERIOR POR ARQUETA
+    </option>
+
+    <option value="ERROR CTO INTERIOR POR POSTES">
+        ERROR CTO INTERIOR POR POSTES
+    </option>
+
+    <option value="ERROR CTO FACHADA POR POSTES">
+        ERROR CTO FACHADA POR POSTES
+    </option>
+
+    <option value="ERROR CTO ARQUETA POR POSTES">
+        ERROR CTO ARQUETA POR POSTES
+    </option>
+
+    <option value="RECURSO PREVENTIVO">
+        RECURSO PREVENTIVO
+    </option>
+
+    <option value="TRABAJO OFICIOS">
+        TRABAJO OFICIOS
+    </option>
+
+    <option value="SUPERVISION TECNICO">
+        SUPERVISION TECNICO
+    </option>
+
+    <option value="AUSENCIA VEHICULO TALLER">
+        AUSENCIA VEHICULO TALLER
+    </option>
+
+    <option value="AUSENCIAS APROBADAS EN PEOPLECARE">
+        AUSENCIAS APROBADAS EN PEOPLECARE
+    </option>
+
+    <option value="CURSOS FORMACION">
+        CURSOS FORMACION
+    </option>
+
+    <option value="RECOGIDA O CAMBIO VEHICULO">
+        RECOGIDA O CAMBIO VEHICULO
+    </option>
+
+    <option value="RECOGIDA DOTACION INICIAL">
+        RECOGIDA DOTACION INICIAL
+    </option>
+
+    <option value="REUNION">
+        REUNION
+    </option>
+
+    <option value="ITV VEHICULO">
+        ITV VEHICULO
+    </option>
+
+    <option value="RECONOCIMIENTO MEDICO">
+        RECONOCIMIENTO MEDICO
+    </option>
+
+    <option value="INVENTARIO">
+        INVENTARIO
+    </option>
+
+    <option value="OTRA">
+        OTRA (especificar)
+    </option>
+
+</select>
+
+<div id="campo_otro" style="display:none;">
+
+    <label>Especificar actuación:</label>
+
+    <input type="text" id="actuacion_otro">
+
+</div>
+
+<label>Tipo de cómputo:</label>
+
+<input
+    type="text"
+    id="tipo_valor"
+    readonly
+    style="background:#e6e6e6;"
+>
+
+<label>CANTIDAD PUNTOS/HORAS:</label>
+
+<input
+    type="number"
+    id="tiempo"
+    step="0.1"
+    required
+>
+
+<label>ID Work / ID Avería:</label>
+
+<input
+    type="text"
+    id="idwork"
+    required
+>
+
+<label>Comentarios del técnico:</label>
+
+<textarea id="comentarios"></textarea>
+
+<button
+    type="button"
+    onclick="enviarCorreo()"
+>
+    Enviar Solicitud FIC
+</button>
+
+</form>
+
+<script>
+
+const equivalencias = {
+
+    "ERROR CTO FACHADA POR ARQUETA": "PUNTOS",
+
+    "ERROR CTO INTERIOR POR ARQUETA": "PUNTOS",
+
+    "ERROR CTO INTERIOR POR POSTES": "PUNTOS",
+
+    "ERROR CTO FACHADA POR POSTES": "PUNTOS",
+
+    "ERROR CTO ARQUETA POR POSTES": "PUNTOS",
+
+    "RECURSO PREVENTIVO": "PUNTOS POR HORAS",
+
+    "TRABAJO OFICIOS": "PUNTOS POR HORAS",
+
+    "SUPERVISION TECNICO": "PUNTOS POR HORAS",
+
+    "AUSENCIA VEHICULO TALLER": "HORAS",
+
+    "AUSENCIAS APROBADAS EN PEOPLECARE": "HORAS",
+
+    "CURSOS FORMACION": "HORAS",
+
+    "RECOGIDA O CAMBIO VEHICULO": "HORAS",
+
+    "RECOGIDA DOTACION INICIAL": "HORAS",
+
+    "REUNION": "HORAS",
+
+    "ITV VEHICULO": "HORAS",
+
+    "RECONOCIMIENTO MEDICO": "HORAS",
+
+    "INVENTARIO": "HORAS"
+
+};
+
+
+function actualizarTipo() {
+
+    const seleccion =
+        document.getElementById("actuacion").value;
+
+    document.getElementById("campo_otro").style.display =
+        seleccion === "OTRA" ? "block" : "none";
+
+    document.getElementById("tipo_valor").value =
+        equivalencias[seleccion] ||
+        (seleccion === "OTRA" ? "" : "");
+
+}
+
+
+function formatearFecha(f) {
+
+    let p = f.split("-");
+
+    return `${p[2]}/${p[1]}/${p[0]}`;
+
+}
+
+
+function enviarCorreo() {
+
+    const fecha =
+        document.getElementById("fecha").value;
+
+    const grupo =
+        document.getElementById("grupo").value;
+
+    const email =
+        document.getElementById("email").value;
+
+    let actuacion =
+        document.getElementById("actuacion").value;
+
+    const actuacion_otro =
+        document.getElementById("actuacion_otro").value;
+
+    const tipoValor =
+        document.getElementById("tipo_valor").value;
+
+    const tiempo =
+        document.getElementById("tiempo").value;
+
+    const idwork =
+        document.getElementById("idwork").value;
+
+    const comentarios =
+        document.getElementById("comentarios").value;
+
+
+    if (actuacion === "OTRA") {
+
+        actuacion = actuacion_otro.trim();
+
+        if (!actuacion) {
+
+            alert("Debes escribir la actuación.");
+
+            return;
+
+        }
+
+    }
+
+
+    const fechaF = formatearFecha(fecha);
+
+
+    const supervisor = {
+
+        SEV5: "santos.lopez@digimobil.es",
+
+        SEV10: "alvaro.munoz@digimobil.es"
+
+    };
+
+
+    const to = supervisor[grupo];
+
+
+    const subject =
+        `SOLICITUD FIC – ${grupo} – ${idwork} – ${actuacion}`;
+
+
+    const nl = "\n\n";
+
+
+    const body =
+`SOLICITUD FIC${nl}
+Fecha del evento: ${fechaF}${nl}
+Grupo de trabajo: ${grupo}${nl}
+Correo electrónico del empleado: ${email}${nl}
+Tipo de actuación: ${actuacion}${nl}
+Tipo de cómputo: ${tipoValor}${nl}
+Tiempo empleado: ${tiempo}${nl}
+ID Work / ID Avería: ${idwork}${nl}
+Comentarios del técnico:${nl}${comentarios}${nl}
+No olvidar adjuntar fotografías o documentos.`;
+
+
+    window.location.href =
+        `mailto:${encodeURIComponent(to)}` +
+        `?subject=${encodeURIComponent(subject)}` +
+        `&body=${encodeURIComponent(body)}`;
+
+}
+
+
+if ("serviceWorker" in navigator) {
+
+    window.addEventListener("load", function() {
+
+        navigator.serviceWorker.register("service-worker.js");
+
+    });
+
+}
+
+</script>
+
+</body>
+</html>
